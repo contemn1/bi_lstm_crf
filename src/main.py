@@ -19,10 +19,10 @@ import src.brat_to_conll as brat_to_conll
 import src.conll_to_brat as conll_to_brat
 import codecs
 matplotlib.use('Agg')
-import src.dataset as ds
+import dataset as ds
 import time
 import random
-import src.evaluate as evaluate
+import evaluate as evaluate
 import configparser
 import train as train
 from pprint import pprint

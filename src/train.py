@@ -2,7 +2,7 @@ import os
 import tensorflow as tf
 import numpy as np
 import sklearn.metrics
-from src.evaluate import remap_labels
+from evaluate import remap_labels
 from pprint import pprint
 import pickle
 import utils_tf
