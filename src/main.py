@@ -132,7 +132,7 @@ def check_parameter_compatiblity(parameters, dataset_filepaths):
         if all([not parameters[s] for s in ['reload_character_embeddings', 'reload_character_lstm', 'reload_token_embeddings', 'reload_token_lstm', 'reload_feedforward', 'reload_crf']]):
             raise ValueError('If use_pretrained_model is set to True, at least one of reload_character_embeddings, reload_character_lstm, reload_token_embeddings, reload_token_lstm, reload_feedforward, reload_crf must be set to True.')
     
-    if parameters['gradient_clipping_value'] < 0:
+    if 'gradient_clipping_value' in parameters and  parameters['gradient_clipping_value'] < 0:
         parameters['gradient_clipping_value'] = abs(parameters['gradient_clipping_value'])
     
 def main():
