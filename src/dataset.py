@@ -320,7 +320,8 @@ class Dataset(object):
 
         # unique_labels_of_interest is used to compute F1-scores.
         self.unique_labels_of_interest = list(self.unique_labels)
-        self.unique_labels_of_interest.remove('O')
+        if 'O' in self.unique_labels_of_interest:
+            self.unique_labels_of_interest.remove('O')
 
         self.unique_label_indices_of_interest = []
         for lab in self.unique_labels_of_interest:
