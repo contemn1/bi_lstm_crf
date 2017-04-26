@@ -3,13 +3,13 @@ import numpy as np
 import codecs
 import re
 import time
-import src.utils_tf as utils_tf
-import src.utils_nlp as utils_nlp
+import utils_tf as utils_tf
+import utils_nlp as utils_nlp
 
 def bidirectional_LSTM(input, hidden_state_dimension, initializer, sequence_length=None, output_sequence=True):
 
     with tf.variable_scope("bidirectional_LSTM"):
-        if not sequence_length:
+        if sequence_length is None:
             batch_size = 1
             sequence_length = tf.shape(input)[1]
             sequence_length = tf.expand_dims(sequence_length, axis=0, name='sequence_length')
@@ -84,13 +84,18 @@ class EntityLSTM(object):
                     shape=[dataset.alphabet_size, parameters['character_embedding_dimension']],
                     initializer=initializer)
                 embedded_characters = tf.nn.embedding_lookup(self.character_embedding_weights, self.input_token_character_indices, name='embedded_characters')
-                if self.verbose: print("embedded_characters: {0}".format(embedded_characters))
+                if self.verbose:
+                    print("embedded_characters: {0}".format(embedded_characters))
                 utils_tf.variable_summaries(self.character_embedding_weights)
 
             # Character LSTM layer
             with tf.variable_scope('character_lstm') as vs:
-                character_lstm_output = bidirectional_LSTM(embedded_characters, parameters['character_lstm_hidden_state_dimension'], initializer,
-                                                           sequence_length=self.input_token_lengths, output_sequence=False)
+                character_lstm_output = bidirectional_LSTM(
+                    embedded_characters,
+                    parameters['character_lstm_hidden_state_dimension'],
+                    initializer,
+                    sequence_length=self.input_token_lengths, output_sequence=False)
+
                 self.character_lstm_variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=vs.name)
 
 
@@ -118,7 +123,8 @@ class EntityLSTM(object):
         # Add dropout
         with tf.variable_scope("dropout"):
             token_lstm_input_drop = tf.nn.dropout(token_lstm_input, self.dropout_keep_prob, name='token_lstm_input_drop')
-            if self.verbose: print("token_lstm_input_drop: {0}".format(token_lstm_input_drop))
+            if self.verbose:
+                print("token_lstm_input_drop: {0}".format(token_lstm_input_drop))
             # https://www.tensorflow.org/api_guides/python/contrib.rnn
             # Prepare data shape to match `rnn` function requirements
             # Current data input shape: (batch_size, n_steps, n_input)
@@ -178,19 +184,22 @@ class EntityLSTM(object):
                 sequence_lengths = tf.expand_dims(sequence_length, axis=0, name='sequence_lengths')
                 unary_scores_expanded = tf.expand_dims(self.unary_scores, axis=0, name='unary_scores_expanded')
                 input_label_indices_flat_batch = tf.expand_dims(input_label_indices_flat_with_start_and_end, axis=0, name='input_label_indices_flat_batch')
-                if self.verbose: print('unary_scores_expanded: {0}'.format(unary_scores_expanded))
-                if self.verbose: print('input_label_indices_flat_batch: {0}'.format(input_label_indices_flat_batch))
-                if self.verbose: print("sequence_lengths: {0}".format(sequence_lengths))
+                if self.verbose:
+                    print('unary_scores_expanded: {0}'.format(unary_scores_expanded))
+                if self.verbose:
+                    print('input_label_indices_flat_batch: {0}'.format(input_label_indices_flat_batch))
+                if self.verbose:
+                    print("sequence_lengths: {0}".format(sequence_lengths))
                 # https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/crf
                 # Compute the log-likelihood of the gold sequences and keep the transition params for inference at test time.
-                self.transition_parameters=tf.get_variable(
+                self.transition_parameters = tf.get_variable(
                     "transitions",
                     shape=[dataset.number_of_classes+2, dataset.number_of_classes+2],
                     initializer=initializer)
                 utils_tf.variable_summaries(self.transition_parameters)
                 log_likelihood, _ = tf.contrib.crf.crf_log_likelihood(
                     unary_scores_expanded, input_label_indices_flat_batch, sequence_lengths, transition_params=self.transition_parameters)
-                self.loss =  tf.reduce_mean(-log_likelihood, name='cross_entropy_mean_loss')
+                self.loss = tf.reduce_mean(-log_likelihood, name='cross_entropy_mean_loss')
                 self.accuracy = tf.constant(1)
 
                 self.crf_variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=vs.name)

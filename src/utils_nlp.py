@@ -47,7 +47,7 @@ def is_token_in_pretrained_embeddings(token, all_pretrained_tokens, parameters):
 
 
 def get_parsed_conll_output(conll_output_filepath):
-    conll_output = [l.rstrip().replace('%','').replace(';','').replace(':', '').strip() for l in codecs.open(conll_output_filepath, 'r', 'utf8')]
+    conll_output = [l.rstrip().replace('%','').replace(';',' ').replace(':', '').strip() for l in codecs.open(conll_output_filepath, 'r', 'utf8')]
     parsed_output = {}
     line = conll_output[1].split()
     parsed_output['all'] = {'accuracy': float(line[1]),

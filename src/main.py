@@ -24,9 +24,9 @@ import time
 import random
 import src.evaluate as evaluate
 import configparser
-import src.train as train
+import train as train
 from pprint import pprint
-from src.entity_lstm import EntityLSTM
+from entity_lstm import EntityLSTM
 from tensorflow.contrib.tensorboard.plugins import projector
 
 # http://stackoverflow.com/questions/42217532/tensorflow-version-1-0-0-rc2-on-windows-opkernel-op-bestsplits-device-typ
@@ -187,7 +187,8 @@ def main():
             # Instantiate the writers for TensorBoard
             writers = {}
             for dataset_type in dataset_filepaths.keys():
-                writers[dataset_type] = tf.summary.FileWriter(tensorboard_log_folders[dataset_type], graph=sess.graph)
+                writers[dataset_type] = tf.summary.FileWriter(tensorboard_log_folders[dataset_type],
+                                                              graph=sess.graph)
             embedding_writer = tf.summary.FileWriter(model_folder) # embedding_writer has to write in model_folder, otherwise TensorBoard won't be able to view embeddings
 
             embeddings_projector_config = projector.ProjectorConfig()
@@ -256,7 +257,9 @@ def main():
                     y_pred, y_true, output_filepaths = train.predict_labels(sess, model, transition_params_trained, parameters, dataset, epoch_number, stats_graph_folder, dataset_filepaths)
 
                     # Evaluate model: save and plot results
-                    evaluate.evaluate_model(results, dataset, y_pred, y_true, stats_graph_folder, epoch_number, epoch_start_time, output_filepaths, parameters)
+                    evaluate.evaluate_model(results, dataset, y_pred, y_true, stats_graph_folder,
+                                            epoch_number, epoch_start_time, output_filepaths,
+                                            parameters)
 
                     if parameters['use_pretrained_model'] and not parameters['train_model']:
                         conll_to_brat.output_brat(output_filepaths, dataset_brat_folders, stats_graph_folder)

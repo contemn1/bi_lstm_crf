@@ -3,7 +3,7 @@ import os
 import glob
 import codecs
 import spacy 
-import src.utils_nlp as utils_nlp
+import utils_nlp as utils_nlp
 
 
 def get_start_and_end_offset_of_token_from_spacy(token):

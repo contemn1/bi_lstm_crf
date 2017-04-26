@@ -1,8 +1,8 @@
 import sklearn.preprocessing
-import src.utils as utils
+import utils as utils
 import collections
 import codecs
-import src.utils_nlp as utils_nlp
+import utils_nlp as utils_nlp
 import re
 import time
 import token

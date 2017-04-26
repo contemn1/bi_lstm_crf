@@ -5,8 +5,8 @@ import sklearn.metrics
 from src.evaluate import remap_labels
 from pprint import pprint
 import pickle
-import src.utils_tf
-from src.main import load_parameters
+import utils_tf
+from main import load_parameters
 import codecs
 #from tensorflow.python.tools.inspect_checkpoint import print_tensors_in_checkpoint_file
 
@@ -135,8 +135,8 @@ def restore_model_parameters_from_pretrained_model(parameters, dataset, sess, mo
     else:
         
         # Resize the token and character embedding weights to match them with the pretrained model (required in order to restore the pretrained model)
-        src.utils_tf.resize_tensor_variable(sess, model.character_embedding_weights, [pretraining_dataset.alphabet_size, parameters['character_embedding_dimension']])
-        src.utils_tf.resize_tensor_variable(sess, model.token_embedding_weights, [pretraining_dataset.vocabulary_size, parameters['token_embedding_dimension']])
+        utils_tf.resize_tensor_variable(sess, model.character_embedding_weights, [pretraining_dataset.alphabet_size, parameters['character_embedding_dimension']])
+        utils_tf.resize_tensor_variable(sess, model.token_embedding_weights, [pretraining_dataset.vocabulary_size, parameters['token_embedding_dimension']])
     
         # Restore the pretrained model
         model_saver.restore(sess, parameters['pretrained_model_checkpoint_filepath']) # Works only when the dimensions of tensor variables are matched.
@@ -145,8 +145,8 @@ def restore_model_parameters_from_pretrained_model(parameters, dataset, sess, mo
         character_embedding_weights, token_embedding_weights = sess.run([model.character_embedding_weights, model.token_embedding_weights]) 
         
         # Restore the sizes of token and character embedding weights
-        src.utils_tf.resize_tensor_variable(sess, model.character_embedding_weights, [dataset.alphabet_size, parameters['character_embedding_dimension']])
-        src.utils_tf.resize_tensor_variable(sess, model.token_embedding_weights, [dataset.vocabulary_size, parameters['token_embedding_dimension']])
+        utils_tf.resize_tensor_variable(sess, model.character_embedding_weights, [dataset.alphabet_size, parameters['character_embedding_dimension']])
+        utils_tf.resize_tensor_variable(sess, model.token_embedding_weights, [dataset.vocabulary_size, parameters['token_embedding_dimension']])
         
         # Re-initialize the token and character embedding weights
         sess.run(tf.variables_initializer([model.character_embedding_weights, model.token_embedding_weights]))

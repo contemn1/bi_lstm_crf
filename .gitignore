@@ -4,6 +4,6 @@
 *.project
 *.pydevproject
 output/*
-data/*
 .DS_Store
 .idea
+parameters.ini

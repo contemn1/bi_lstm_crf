@@ -137,8 +137,8 @@ def plot_classification_report(classification_report, title='Classification repo
     if from_conll_json:
         for label in sorted(classification_report.keys()):
             support.append(classification_report[label]["support"])
-            classes.append('micro-avg' if label=='all' else label)
-            class_names.append('micro-avg' if label=='all' else label)
+            classes.append('micro-avg' if label == 'all' else label)
+            class_names.append('micro-avg' if label == 'all' else label)
             plotMat.append([float(classification_report[label][x]) for x in ["precision", "recall", "f1"]]) 
     else:
         lines = classification_report.split('\n')

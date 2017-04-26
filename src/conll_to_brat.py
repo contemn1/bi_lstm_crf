@@ -1,9 +1,9 @@
 import os
 import codecs
-import src.utils as utils
+import utils as utils
 import glob
 import shutil
-import src.utils_nlp as utils_nlp
+import utils_nlp as utils_nlp
 
 def generate_reference_text_file_for_conll(conll_filepath, text_folder):
     '''

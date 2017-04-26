@@ -2,10 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sklearn.metrics
 import os
-import src.utils_plots as utils_plots
+import utils_plots as utils_plots
 import json
 import time
-import src.utils_nlp as utils_nlp
+import utils_nlp as utils_nlp
 
 
 def assess_model(y_pred, y_true, labels, target_names, labels_with_o, target_names_with_o, dataset_type, stats_graph_folder, epoch_number, parameters,
@@ -207,8 +207,8 @@ def remap_labels(y_pred, y_true, dataset, evaluation_mode='bio'):
     else:
         raise ValueError("evaluation_mode must be either 'bio', 'token', or 'binary'.")
 
-    new_y_pred = [ remap_index[label_index] for label_index in y_pred ]
-    new_y_true = [ remap_index[label_index] for label_index in y_true ]
+    new_y_pred = [remap_index[label_index] for label_index in y_pred]
+    new_y_true = [remap_index[label_index] for label_index in y_true]
 
     new_label_indices_with_o = new_label_indices[:]
     new_label_names_with_o = new_label_names[:]
@@ -250,9 +250,11 @@ def evaluate_model(results, dataset, y_pred_all, y_true_all, stats_graph_folder,
             continue
         conll_evaluation_script = os.path.join('.', 'conlleval')
         conll_output_filepath = '{0}_conll_evaluation.txt'.format(output_filepaths[dataset_type])
+        print('output_filepaths[dataset_type] is : {0}'.format(output_filepaths[dataset_type]))
+        print('conll_output_filepath is : {0}'.format(conll_output_filepath))
         shell_command = 'perl {0} < {1} > {2}'.format(conll_evaluation_script, output_filepaths[dataset_type], conll_output_filepath)
         print('shell_command: {0}'.format(shell_command))
-        os.system(shell_command)
+        #os.system(shell_command)
         conll_parsed_output = utils_nlp.get_parsed_conll_output(conll_output_filepath)
         results['epoch'][epoch_number][0][dataset_type]['conll'] = conll_parsed_output
         results['epoch'][epoch_number][0][dataset_type]['f1_conll'] = {}
@@ -269,7 +271,7 @@ def evaluate_model(results, dataset, y_pred_all, y_true_all, stats_graph_folder,
                         dpi=300, format=parameters['plot_format'], bbox_inches='tight')
             plt.close()
 
-    if  parameters['train_model'] and 'train' in output_filepaths.keys() and 'valid' in output_filepaths.keys():
+    if parameters['train_model'] and 'train' in output_filepaths.keys() and 'valid' in output_filepaths.keys():
         plot_f1_vs_epoch(results, stats_graph_folder, 'f1_score', parameters)
         plot_f1_vs_epoch(results, stats_graph_folder, 'accuracy_score', parameters)
         plot_f1_vs_epoch(results, stats_graph_folder, 'f1_conll', parameters)
