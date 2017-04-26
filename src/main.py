@@ -8,23 +8,24 @@ CUDA_VISIBLE_DEVICES=3 python3.5 main.py &
 from __future__ import print_function
 import tensorflow as tf
 import os
-import utils as utils
+import utils
 import numpy as np
 import matplotlib
 import copy
 import distutils.util
 import pickle
 import glob
-import brat_to_conll as brat_to_conll
-import conll_to_brat as conll_to_brat
+import brat_to_conll
+import conll_to_brat
 import codecs
+import utils_nlp
 matplotlib.use('Agg')
 import dataset as ds
 import time
 import random
-import evaluate as evaluate
+import evaluate
 import configparser
-import train as train
+import train
 from pprint import pprint
 from entity_lstm import EntityLSTM
 from tensorflow.contrib.tensorboard.plugins import projector
@@ -38,7 +39,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-def load_parameters(parameters_filepath=os.path.join('.', 'parameters.ini'), verbose=True):
+def load_parameters(parameters_filepath=os.path.join('.','parameters.ini'), verbose=True):
     '''
     Load parameters from the ini file, and ensure that each parameter is cast to the correct type
     '''
@@ -46,28 +47,25 @@ def load_parameters(parameters_filepath=os.path.join('.', 'parameters.ini'), ver
     conf_parameters.read(parameters_filepath)
     nested_parameters = utils.convert_configparser_to_dictionary(conf_parameters)
     parameters = {}
-    for k, v in nested_parameters.items():
+    for k,v in nested_parameters.items():
         parameters.update(v)
-    for k, v in parameters.items():
+    for k,v in parameters.items():
         # If the value is a list delimited with a comma, choose one element at random.
         if ',' in v:
             v = random.choice(v.split(','))
             parameters[k] = v
         # Ensure that each parameter is cast to the correct type
-        if k in ['character_embedding_dimension', 'character_lstm_hidden_state_dimension',
-                 'token_embedding_dimension', 'token_lstm_hidden_state_dimension', 'patience',
-                 'maximum_number_of_epochs', 'maximum_training_time', 'number_of_cpu_threads','number_of_gpus']:
+        if k in ['character_embedding_dimension','character_lstm_hidden_state_dimension','token_embedding_dimension',
+                 'token_lstm_hidden_state_dimension','patience','maximum_number_of_epochs','maximum_training_time','number_of_cpu_threads','number_of_gpus']:
             parameters[k] = int(v)
-        elif k in ['dropout_rate', 'learning_rate']:
+        elif k in ['dropout_rate', 'learning_rate', 'gradient_clipping_value']:
             parameters[k] = float(v)
         elif k in ['remap_unknown_tokens_to_unk', 'use_character_lstm', 'use_crf', 'train_model', 'use_pretrained_model', 'debug', 'verbose',
                  'reload_character_embeddings', 'reload_character_lstm', 'reload_token_embeddings', 'reload_token_lstm', 'reload_feedforward', 'reload_crf',
-                 'check_for_lowercase', 'check_for_digits_replaced_with_zeros', 'freeze_token_embeddings', 'load_only_pretrained_token_embeddings', 'is_tree_bank']:
+                 'check_for_lowercase', 'check_for_digits_replaced_with_zeros', 'freeze_token_embeddings', 'load_only_pretrained_token_embeddings']:
             parameters[k] = distutils.util.strtobool(v)
-    if verbose:
-        pprint(parameters)
+    if verbose: pprint(parameters)
     return parameters, conf_parameters
-
 
 def get_valid_dataset_filepaths(parameters):
     dataset_filepaths = {}
@@ -75,6 +73,7 @@ def get_valid_dataset_filepaths(parameters):
     for dataset_type in ['train', 'valid', 'test', 'deploy']:
         dataset_filepaths[dataset_type] = os.path.join(parameters['dataset_text_folder'], '{0}.txt'.format(dataset_type))
         dataset_brat_folders[dataset_type] = os.path.join(parameters['dataset_text_folder'], dataset_type)
+        dataset_compatible_with_brat_filepath = os.path.join(parameters['dataset_text_folder'], '{0}_compatible_with_brat.txt'.format(dataset_type))
 
         # Conll file exists
         if os.path.isfile(dataset_filepaths[dataset_type]) and os.path.getsize(dataset_filepaths[dataset_type]) > 0:
@@ -83,14 +82,17 @@ def get_valid_dataset_filepaths(parameters):
 
                 # Check compatibility between conll and brat files
                 brat_to_conll.check_brat_annotation_and_text_compatibility(dataset_brat_folders[dataset_type])
+                if os.path.exists(dataset_compatible_with_brat_filepath):
+                    dataset_filepaths[dataset_type] = dataset_compatible_with_brat_filepath
                 conll_to_brat.check_compatibility_between_conll_and_brat_text(dataset_filepaths[dataset_type], dataset_brat_folders[dataset_type])
 
             # Brat text files do not exist
             else:
 
                 # Populate brat text and annotation files based on conll file
-                conll_to_brat.conll_to_brat(dataset_filepaths[dataset_type], dataset_brat_folders[dataset_type], dataset_brat_folders[dataset_type])
-
+                conll_to_brat.conll_to_brat(dataset_filepaths[dataset_type], dataset_compatible_with_brat_filepath, dataset_brat_folders[dataset_type], dataset_brat_folders[dataset_type])
+                dataset_filepaths[dataset_type] = dataset_compatible_with_brat_filepath
+                
         # Conll file does not exist
         else:
 
@@ -103,9 +105,15 @@ def get_valid_dataset_filepaths(parameters):
             else:
                 del dataset_filepaths[dataset_type]
                 del dataset_brat_folders[dataset_type]
-
+                continue
+        
+        if parameters['tagging_format'] == 'bioes':
+            # Generate conll file with BIOES format
+            bioes_filepath = os.path.join(parameters['dataset_text_folder'], '{0}_bioes.txt'.format(dataset_type))
+            utils_nlp.convert_conll_from_bio_to_bioes(dataset_filepaths[dataset_type], bioes_filepath)
+            dataset_filepaths[dataset_type] = bioes_filepath
+            
     return dataset_filepaths, dataset_brat_folders
-
 
 def check_parameter_compatiblity(parameters, dataset_filepaths):
     # Check mode of operation
@@ -123,8 +131,10 @@ def check_parameter_compatiblity(parameters, dataset_filepaths):
     if parameters['use_pretrained_model']:
         if all([not parameters[s] for s in ['reload_character_embeddings', 'reload_character_lstm', 'reload_token_embeddings', 'reload_token_lstm', 'reload_feedforward', 'reload_crf']]):
             raise ValueError('If use_pretrained_model is set to True, at least one of reload_character_embeddings, reload_character_lstm, reload_token_embeddings, reload_token_lstm, reload_feedforward, reload_crf must be set to True.')
-
-
+    
+    if parameters['gradient_clipping_value'] < 0:
+        parameters['gradient_clipping_value'] = abs(parameters['gradient_clipping_value'])
+    
 def main():
 
     parameters, conf_parameters = load_parameters()
@@ -187,8 +197,7 @@ def main():
             # Instantiate the writers for TensorBoard
             writers = {}
             for dataset_type in dataset_filepaths.keys():
-                writers[dataset_type] = tf.summary.FileWriter(tensorboard_log_folders[dataset_type],
-                                                              graph=sess.graph)
+                writers[dataset_type] = tf.summary.FileWriter(tensorboard_log_folders[dataset_type], graph=sess.graph)
             embedding_writer = tf.summary.FileWriter(model_folder) # embedding_writer has to write in model_folder, otherwise TensorBoard won't be able to view embeddings
 
             embeddings_projector_config = projector.ProjectorConfig()
@@ -257,9 +266,7 @@ def main():
                     y_pred, y_true, output_filepaths = train.predict_labels(sess, model, transition_params_trained, parameters, dataset, epoch_number, stats_graph_folder, dataset_filepaths)
 
                     # Evaluate model: save and plot results
-                    evaluate.evaluate_model(results, dataset, y_pred, y_true, stats_graph_folder,
-                                            epoch_number, epoch_start_time, output_filepaths,
-                                            parameters)
+                    evaluate.evaluate_model(results, dataset, y_pred, y_true, stats_graph_folder, epoch_number, epoch_start_time, output_filepaths, parameters)
 
                     if parameters['use_pretrained_model'] and not parameters['train_model']:
                         conll_to_brat.output_brat(output_filepaths, dataset_brat_folders, stats_graph_folder)
@@ -277,7 +284,7 @@ def main():
 
                     # Early stop
                     valid_f1_score = results['epoch'][epoch_number][0]['valid']['f1_score']['micro']
-                    if valid_f1_score > previous_best_valid_f1_score:
+                    if  valid_f1_score > previous_best_valid_f1_score:
                         bad_counter = 0
                         previous_best_valid_f1_score = valid_f1_score
                         conll_to_brat.output_brat(output_filepaths, dataset_brat_folders, stats_graph_folder, overwrite=True)
@@ -290,8 +297,7 @@ def main():
                         results['execution_details']['early_stop'] = True
                         break
 
-                    if epoch_number >= parameters['maximum_number_of_epochs']:
-                        break
+                    if epoch_number >= parameters['maximum_number_of_epochs']: break
 
 
             except KeyboardInterrupt:

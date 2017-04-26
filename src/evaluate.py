@@ -2,10 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sklearn.metrics
 import os
-import utils_plots as utils_plots
+import utils_plots
 import json
 import time
-import utils_nlp as utils_nlp
+import utils_nlp
 
 
 def assess_model(y_pred, y_true, labels, target_names, labels_with_o, target_names_with_o, dataset_type, stats_graph_folder, epoch_number, parameters,
@@ -163,10 +163,7 @@ def remap_labels(y_pred, y_true, dataset, evaluation_mode='bio'):
     if evaluation_mode == 'bio':
         # sort label to index
         new_label_names = all_unique_labels[:]
-        try:
-            new_label_names.remove('O')
-        except:
-            pass
+        new_label_names.remove('O')
         new_label_names.sort(key=lambda x: (utils_nlp.remove_bio_from_label_name(x), x))
         new_label_names.append('O')
         new_label_indices = list(range(len(new_label_names)))
@@ -182,11 +179,7 @@ def remap_labels(y_pred, y_true, dataset, evaluation_mode='bio'):
         for label_name in all_unique_labels:
             if label_name == 'O':
                 continue
-
-            if label_name[:2] in {'B-', 'I-'} or label_name == 'O':
-                new_label_name = utils_nlp.remove_bio_from_label_name(label_name)
-            else:
-                new_label_name = label_name
+            new_label_name = utils_nlp.remove_bio_from_label_name(label_name)
             new_label_names.add(new_label_name)
         new_label_names = sorted(list(new_label_names)) + ['O']
         new_label_indices = list(range(len(new_label_names)))
@@ -194,11 +187,7 @@ def remap_labels(y_pred, y_true, dataset, evaluation_mode='bio'):
 
         remap_index = {}
         for label_name in all_unique_labels:
-            if label_name[:2] in {'B-', 'I-'} or label_name == 'O':
-                new_label_name = utils_nlp.remove_bio_from_label_name(label_name)
-            else:
-                new_label_name = label_name
-
+            new_label_name = utils_nlp.remove_bio_from_label_name(label_name)
             label_index = dataset.label_to_index[label_name]
             remap_index[label_index] = new_label_to_index[new_label_name]
 
@@ -218,8 +207,8 @@ def remap_labels(y_pred, y_true, dataset, evaluation_mode='bio'):
     else:
         raise ValueError("evaluation_mode must be either 'bio', 'token', or 'binary'.")
 
-    new_y_pred = [remap_index[label_index] for label_index in y_pred]
-    new_y_true = [remap_index[label_index] for label_index in y_true]
+    new_y_pred = [ remap_index[label_index] for label_index in y_pred ]
+    new_y_true = [ remap_index[label_index] for label_index in y_true ]
 
     new_label_indices_with_o = new_label_indices[:]
     new_label_names_with_o = new_label_names[:]
@@ -242,7 +231,7 @@ def evaluate_model(results, dataset, y_pred_all, y_true_all, stats_graph_folder,
         y_pred_original = y_pred_all[dataset_type]
         y_true_original = y_true_all[dataset_type]
 
-        for evaluation_mode in ['token', 'binary']:
+        for evaluation_mode in ['bio', 'token', 'binary']:
             y_pred, y_true, label_indices, label_names, label_indices_with_o, label_names_with_o = remap_labels(y_pred_original, y_true_original, dataset,
                                                                                                                 evaluation_mode=evaluation_mode)
             result_update[dataset_type][evaluation_mode] = assess_model(y_pred, y_true, label_indices, label_names, label_indices_with_o, label_names_with_o,
@@ -259,10 +248,11 @@ def evaluate_model(results, dataset, y_pred_all, y_true_all, stats_graph_folder,
     for dataset_type in ['train', 'valid', 'test']:
         if dataset_type not in output_filepaths.keys():
             continue
-        #conll_evaluation_script = os.path.join('.', 'conlleval')
+        conll_evaluation_script = os.path.join('.', 'conlleval')
         conll_output_filepath = '{0}_conll_evaluation.txt'.format(output_filepaths[dataset_type])
-        #shell_command = 'perl {0} < {1} > {2}'.format(conll_evaluation_script, output_filepaths[dataset_type], conll_output_filepath)
-        #os.system(shell_command)
+        shell_command = 'perl {0} < {1} > {2}'.format(conll_evaluation_script, output_filepaths[dataset_type], conll_output_filepath)
+        print('shell_command: {0}'.format(shell_command))
+        os.system(shell_command)
         conll_parsed_output = utils_nlp.get_parsed_conll_output(conll_output_filepath)
         results['epoch'][epoch_number][0][dataset_type]['conll'] = conll_parsed_output
         results['epoch'][epoch_number][0][dataset_type]['f1_conll'] = {}
@@ -279,7 +269,7 @@ def evaluate_model(results, dataset, y_pred_all, y_true_all, stats_graph_folder,
                         dpi=300, format=parameters['plot_format'], bbox_inches='tight')
             plt.close()
 
-    if parameters['train_model'] and 'train' in output_filepaths.keys() and 'valid' in output_filepaths.keys():
+    if  parameters['train_model'] and 'train' in output_filepaths.keys() and 'valid' in output_filepaths.keys():
         plot_f1_vs_epoch(results, stats_graph_folder, 'f1_score', parameters)
         plot_f1_vs_epoch(results, stats_graph_folder, 'accuracy_score', parameters)
         plot_f1_vs_epoch(results, stats_graph_folder, 'f1_conll', parameters)
