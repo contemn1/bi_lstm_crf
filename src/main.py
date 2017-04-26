@@ -8,15 +8,15 @@ CUDA_VISIBLE_DEVICES=3 python3.5 main.py &
 from __future__ import print_function
 import tensorflow as tf
 import os
-import src.utils as utils
+import utils as utils
 import numpy as np
 import matplotlib
 import copy
 import distutils.util
 import pickle
 import glob
-import src.brat_to_conll as brat_to_conll
-import src.conll_to_brat as conll_to_brat
+import brat_to_conll as brat_to_conll
+import conll_to_brat as conll_to_brat
 import codecs
 matplotlib.use('Agg')
 import dataset as ds
