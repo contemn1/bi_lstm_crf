@@ -163,7 +163,10 @@ def remap_labels(y_pred, y_true, dataset, evaluation_mode='bio'):
     if evaluation_mode == 'bio':
         # sort label to index
         new_label_names = all_unique_labels[:]
-        new_label_names.remove('O')
+        try:
+            new_label_names.remove('O')
+        except:
+            pass
         new_label_names.sort(key=lambda x: (utils_nlp.remove_bio_from_label_name(x), x))
         new_label_names.append('O')
         new_label_indices = list(range(len(new_label_names)))
@@ -248,12 +251,9 @@ def evaluate_model(results, dataset, y_pred_all, y_true_all, stats_graph_folder,
     for dataset_type in ['train', 'valid', 'test']:
         if dataset_type not in output_filepaths.keys():
             continue
-        conll_evaluation_script = os.path.join('.', 'conlleval')
+        #conll_evaluation_script = os.path.join('.', 'conlleval')
         conll_output_filepath = '{0}_conll_evaluation.txt'.format(output_filepaths[dataset_type])
-        print('output_filepaths[dataset_type] is : {0}'.format(output_filepaths[dataset_type]))
-        print('conll_output_filepath is : {0}'.format(conll_output_filepath))
-        shell_command = 'perl {0} < {1} > {2}'.format(conll_evaluation_script, output_filepaths[dataset_type], conll_output_filepath)
-        print('shell_command: {0}'.format(shell_command))
+        #shell_command = 'perl {0} < {1} > {2}'.format(conll_evaluation_script, output_filepaths[dataset_type], conll_output_filepath)
         #os.system(shell_command)
         conll_parsed_output = utils_nlp.get_parsed_conll_output(conll_output_filepath)
         results['epoch'][epoch_number][0][dataset_type]['conll'] = conll_parsed_output
