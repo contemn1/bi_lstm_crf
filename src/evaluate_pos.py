@@ -146,3 +146,27 @@ def evaluate_model(results, dataset, y_pred_all, y_true_all, stats_graph_folder,
 
     results['execution_details']['train_duration'] = time.time() - results['execution_details']['train_start']
     save_results(results, stats_graph_folder)
+
+def remap_labels(y_pred, y_true, dataset):
+    '''
+    y_pred: list of predicted labels
+    y_true: list of gold labels
+    evaluation_mode: 'bio', 'token', or 'binary'
+
+    Both y_pred and y_true must use label indices and names specified in the dataset
+#     (dataset.unique_label_indices_of_interest, dataset.unique_label_indices_of_interest).
+    '''
+    all_unique_labels = dataset.unique_labels
+        # sort label to index
+    new_label_names = all_unique_labels[:]
+    new_label_indices = list(range(len(new_label_names)))
+
+    remap_index = {}
+    for i, label_name in enumerate(new_label_names):
+        label_index = dataset.label_to_index[label_name]
+        remap_index[label_index] = i
+
+    new_y_pred = [remap_index[label_index] for label_index in y_pred]
+    new_y_true = [remap_index[label_index] for label_index in y_true]
+
+    return new_y_pred, new_y_true, new_label_indices, new_label_names
