@@ -4,6 +4,7 @@ import utils_plots
 import sklearn
 import os
 import json
+import numpy as np
 
 def plot_f1_vs_epoch(results, stats_graph_folder, metric, parameters, from_json=False):
     '''
