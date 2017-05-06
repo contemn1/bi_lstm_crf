@@ -84,7 +84,8 @@ class EntityLSTM(object):
                     shape=[dataset.alphabet_size, parameters['character_embedding_dimension']],
                     initializer=initializer)
                 embedded_characters = tf.nn.embedding_lookup(self.character_embedding_weights, self.input_token_character_indices, name='embedded_characters')
-                if self.verbose: print("embedded_characters: {0}".format(embedded_characters))
+                if self.verbose:
+                    print("embedded_characters: {0}".format(embedded_characters))
                 utils_tf.variable_summaries(self.character_embedding_weights)
 
             # Character LSTM layer
@@ -163,7 +164,7 @@ class EntityLSTM(object):
                 small_score = -1000.0
                 large_score = 0.0
                 sequence_length = tf.shape(self.unary_scores)[0]
-                unary_scores_with_start_and_end = tf.concat([self.unary_scores, tf.tile( tf.constant(small_score, shape=[1, 2]) , [sequence_length, 1])], 1)
+                unary_scores_with_start_and_end = tf.concat([self.unary_scores, tf.tile(tf.constant(small_score, shape=[1, 2]) , [sequence_length, 1])], 1)
                 start_unary_scores = [[small_score] * dataset.number_of_classes + [large_score, small_score]]
                 end_unary_scores = [[small_score] * dataset.number_of_classes + [small_score, large_score]]
                 self.unary_scores = tf.concat([start_unary_scores, unary_scores_with_start_and_end, end_unary_scores], 0)
@@ -188,7 +189,7 @@ class EntityLSTM(object):
                 utils_tf.variable_summaries(self.transition_parameters)
                 log_likelihood, _ = tf.contrib.crf.crf_log_likelihood(
                     unary_scores_expanded, input_label_indices_flat_batch, sequence_lengths, transition_params=self.transition_parameters)
-                self.loss =  tf.reduce_mean(-log_likelihood, name='cross_entropy_mean_loss')
+                self.loss = tf.reduce_mean(-log_likelihood, name='cross_entropy_mean_loss')
                 self.accuracy = tf.constant(1)
 
                 self.crf_variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=vs.name)

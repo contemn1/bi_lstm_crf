@@ -207,8 +207,8 @@ def remap_labels(y_pred, y_true, dataset, evaluation_mode='bio'):
     else:
         raise ValueError("evaluation_mode must be either 'bio', 'token', or 'binary'.")
 
-    new_y_pred = [ remap_index[label_index] for label_index in y_pred ]
-    new_y_true = [ remap_index[label_index] for label_index in y_true ]
+    new_y_pred = [remap_index[label_index] for label_index in y_pred]
+    new_y_true = [remap_index[label_index] for label_index in y_true]
 
     new_label_indices_with_o = new_label_indices[:]
     new_label_names_with_o = new_label_names[:]

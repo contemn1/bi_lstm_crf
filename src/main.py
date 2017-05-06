@@ -176,7 +176,7 @@ def main():
 
             output_folder=os.path.join('..', 'output')
             utils.create_folder_if_not_exists(output_folder)
-            stats_graph_folder=os.path.join(output_folder, model_name) # Folder where to save graphs
+            stats_graph_folder = os.path.join(output_folder, model_name) # Folder where to save graphs
             utils.create_folder_if_not_exists(stats_graph_folder)
             model_folder = os.path.join(stats_graph_folder, 'model')
             utils.create_folder_if_not_exists(model_folder)
