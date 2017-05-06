@@ -2,6 +2,7 @@ import os
 import codecs
 import tensorflow as tf
 import sklearn
+import evaluate_pos
 
 
 def prediction_step_pos(sess, dataset, dataset_type, model, transition_params_trained,
@@ -40,9 +41,11 @@ def prediction_step_pos(sess, dataset, dataset_type, model, transition_params_tr
         all_predictions.extend(predictions)
         all_y_true.extend(dataset.label_indices[dataset_type][i])
 
-    print(sklearn.metrics.classification_report(all_y_true, all_predictions, digits=4,
-                                                labels=dataset.label_indices,
-                                                target_names=dataset.unique_labels))
+    new_y_pred, new_y_true, new_label_indices, new_label_names = evaluate_pos.remap_labels(
+        all_predictions, all_y_true, dataset)
+    print(sklearn.metrics.classification_report(new_y_true, new_y_pred, digits=4,
+                                                labels=new_label_indices,
+                                                target_names=new_label_names))
 
     return all_predictions, all_y_true, output_filepath
 
